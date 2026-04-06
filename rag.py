@@ -1,13 +1,15 @@
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_community.chains import RetrievalQA
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
-qa_chain = None
+retrieval_chain = None
 
 def create_chain(text):
-    global qa_chain
+    global retrieval_chain
 
     splitter = CharacterTextSplitter(chunk_size=300, chunk_overlap=50)
     docs = splitter.create_documents([text])
@@ -17,11 +19,16 @@ def create_chain(text):
 
     llm = ChatOpenAI(model="gpt-4o-mini")
 
-    qa_chain = RetrievalQA.from_chain_type(
-        llm=llm,
-        retriever=vectorstore.as_retriever()
-    )
+    prompt = ChatPromptTemplate.from_template("""Answer the question based on the context below.
+
+Context: {context}
+
+Question: {input}
+""")
+
+    doc_chain = create_stuff_documents_chain(llm, prompt)
+    retrieval_chain = create_retrieval_chain(vectorstore.as_retriever(), doc_chain)
 
 def ask_question(query):
-    result = qa_chain.invoke({"query": query})
-    return result["result"]
+    result = retrieval_chain.invoke({"input": query})
+    return result["answer"]
