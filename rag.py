@@ -6,41 +6,36 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 import streamlit as st
 
-def create_chain(text):
-    if not text.strip():
-        raise ValueError("⚠️ Text is empty!")
+chain = None
 
-    # Split text
+def create_chain(text):
+    global chain
+    if not text.strip():
+        raise ValueError("Text is empty!")
+
     splitter = CharacterTextSplitter(chunk_size=300, chunk_overlap=50)
     docs = splitter.create_documents([text])
 
-    # Embeddings
     embeddings = OpenAIEmbeddings(
         model="text-embedding-3-small",
         api_key=st.secrets["OPENAI_API_KEY"]
     )
-
-    # Vector store
     vectorstore = FAISS.from_documents(docs, embeddings)
     retriever = vectorstore.as_retriever()
 
-    # LLM
     llm = ChatOpenAI(
         model="gpt-4o-mini",
         api_key=st.secrets["OPENAI_API_KEY"]
     )
 
-    # Prompt
     prompt = ChatPromptTemplate.from_messages([
         ("system", "Answer the question based only on the context below.\n\nContext:\n{context}"),
         ("human", "{question}")
     ])
 
-    # Format docs properly
     def format_docs(docs):
         return "\n\n".join(doc.page_content for doc in docs)
 
-    # Chain
     chain = (
         {
             "context": retriever | format_docs,
@@ -51,11 +46,7 @@ def create_chain(text):
         | StrOutputParser()
     )
 
-    return chain
-
-
-def ask_question(chain, query):
+def ask_question(query):
     if not query.strip():
-        return "⚠️ Please enter a question!"
-
+        return "Please enter a question!"
     return chain.invoke(query)
