@@ -19,12 +19,10 @@ def create_chain(text):
 
     llm = ChatOpenAI(model="gpt-4o-mini")
 
-    prompt = ChatPromptTemplate.from_template("""Answer the question based on the context below.
-
-Context: {context}
-
-Question: {input}
-""")
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "Answer the question based on the context below.\n\nContext: {context}"),
+        ("human", "{input}")
+    ])
 
     doc_chain = create_stuff_documents_chain(llm, prompt)
     retrieval_chain = create_retrieval_chain(vectorstore.as_retriever(), doc_chain)
