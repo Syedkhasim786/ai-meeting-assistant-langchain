@@ -1,6 +1,7 @@
-from langchain.text_splitter import CharacterTextSplitter
+from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
+from langchain_community.chains import RetrievalQAWithSourcesChain
 from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
 
@@ -23,4 +24,5 @@ def create_chain(text):
     )
 
 def ask_question(query):
-    return qa_chain.run(query)
+    result = qa_chain.invoke({"query": query})
+    return result["result"]
