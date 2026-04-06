@@ -1,7 +1,7 @@
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
+from langchain_community.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
 
 qa_chain = None
